@@ -1,18 +1,8 @@
 pipeline {
     agent any
-
-    environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        DOCKERHUB_REPO = 'kondekarprajot/java-docker-jenkins'
-    }
+    tools { jdk 'JDK21' }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', url: 'https://github.com/kondekarprajot/java-docker-jenkins.git'
-            }
-        }
-
         stage('Build Jar') {
             steps {
                 bat 'mvn clean package'
@@ -21,20 +11,16 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat "docker build -t %DOCKERHUB_REPO% ."
+                bat 'docker build -t kondekarprajot/java-docker-jenkins:latest .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                bat "docker login -u %DOCKERHUB_CREDENTIALS_USR% -p %DOCKERHUB_CREDENTIALS_PSW%"
-                bat "docker push %DOCKERHUB_REPO%"
-            }
-        }
-
-        stage('Clean Up') {
-            steps {
-                bat "docker rmi %DOCKERHUB_REPO% || exit 0"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_CREDENTIALS_USR', passwordVariable: 'DOCKERHUB_CREDENTIALS_PSW')]) {
+                    bat 'docker login -u %DOCKERHUB_CREDENTIALS_USR% -p %DOCKERHUB_CREDENTIALS_PSW%'
+                    bat 'docker push kondekarprajot/java-docker-jenkins:latest'
+                }
             }
         }
     }
