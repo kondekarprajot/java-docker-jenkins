@@ -15,30 +15,26 @@ pipeline {
 
         stage('Build Jar') {
             steps {
-                sh 'mvn clean package'
+                bat 'mvn clean package'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKERHUB_REPO}:latest ."
-                }
+                bat "docker build -t %DOCKERHUB_REPO% ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                script {
-                    sh "echo ${DOCKERHUB_CREDENTIALS_PSW} | docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin"
-                    sh "docker push ${DOCKERHUB_REPO}:latest"
-                }
+                bat "docker login -u %DOCKERHUB_CREDENTIALS_USR% -p %DOCKERHUB_CREDENTIALS_PSW%"
+                bat "docker push %DOCKERHUB_REPO%"
             }
         }
 
         stage('Clean Up') {
             steps {
-                sh 'docker rmi ${DOCKERHUB_REPO}:latest || true'
+                bat "docker rmi %DOCKERHUB_REPO% || exit 0"
             }
         }
     }
